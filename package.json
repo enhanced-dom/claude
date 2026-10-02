@@ -1,0 +1,36 @@
+{
+  "name": "@enhanced-dom/claude",
+  "version": "0.1.0",
+  "description": "Helpers for working with claude",
+  "keywords": [],
+  "repository": "https://github.com/enhanced-dom/claude.git",
+  "license": "MIT",
+  "author": "CD9B4A105290E17E0948E021DF4105107C88693C59C0B891CCC08366C51AEA990902A6A156AC87D88A2FC41422A5E1C3C4071F251F19441C4516000EC25F87DF",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "@enhanced-dom-claude": "index.js"
+  },
+  "scripts": {
+    "prepare": "@enhanced-dom-bootstrap-tsconfig && (@enhanced-dom-husky || echo 'skipped: @enhanced-dom/lint not installed')",
+    "prebuild": "rimraf dist/*",
+    "build": "tsc -p ./tsconfig.json",
+    "postbuild": "tsc-esm-fix --tsconfig=./tsconfig.json && copyfiles LICENSE.md README.md NOTICE.md dist && copyfiles -u 2 -e \"src/devcontainer/**/*.ts\" \"src/devcontainer/**/*\" dist/devcontainer && copyfiles -u 2 -e \"src/architecture-diagram/**/*.ts\" \"src/architecture-diagram/**/*\" dist/architecture-diagram && copyfiles -u 2 -e \"src/react/**/*.ts\" \"src/react/**/*\" dist/react && copyfiles -u 2 -e \"src/code/**/*.ts\" \"src/code/**/*\" dist/code && copyfiles -u 2 -e \"src/agent/**/*.ts\" \"src/agent/**/*\" dist/agent && copyfiles -u 2 -e \"src/teams-scrape/index.ts\" \"src/teams-scrape/**/*\" dist/teams-scrape && @enhanced-dom-copy-packagejson",
+    "package": "cd dist && npm pack",
+    "lint": "eslint --fix --config eslint.config.cjs src"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@enhanced-dom/build": "^0.3.1",
+    "@types/node": "^22.20.4",
+    "@types/yargs": "^17.0.35"
+  },
+  "optionalDependencies": {
+    "@enhanced-dom/lint": "^0.3.0"
+  },
+  "engines": {
+    "node": ">=22.23.2",
+    "npm": ">=12"
+  }
+}

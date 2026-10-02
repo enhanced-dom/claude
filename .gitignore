@@ -1,0 +1,12 @@
+
+.venv
+# Added by code-review-graph
+.code-review-graph/
+dist
+node_modules
+.vscode
+.rtk
+.claude
+.mcp.json
+CLAUDE.md
+.devcontainer
