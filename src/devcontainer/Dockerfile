@@ -1,12 +1,18 @@
-FROM node:24-trixie
+FROM debian:trixie-slim
 
 ARG TZ
 ENV TZ="$TZ"
 
 ARG CLAUDE_CODE_VERSION=latest
+ENV CLAUDE_CODE_VERSION=$CLAUDE_CODE_VERSION
 
-# Install basic development tools and iptables/ipset
+# Install basic development tools and iptables/ipset (ca-certificates/curl/wget
+# added since trixie-slim, unlike the node:*-trixie base this used to be, does
+# not ship them by default; curl is needed to install nvm below)
 RUN apt-get update && apt-get install -y --no-install-recommends \
+  ca-certificates \
+  curl \
+  wget \
   less \
   git \
   procps \
@@ -29,12 +35,29 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   python3-venv \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Ensure default node user has access to /usr/local/share
-RUN mkdir -p /usr/local/share/npm-global && \
-  chown -R node:node /usr/local/share
+# Create the non-root "node" user (debian:trixie-slim, unlike the node:*
+# images this used to be based on, doesn't ship one) — uid/gid 1000 matches
+# the official node image's own convention.
+RUN groupadd --gid 1000 node && \
+  useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
-# Enable Corepack so npm/yarn/pnpm respect the "packageManager" field in package.json
-RUN corepack enable
+# Bake in nvm only — no Node/npm version is installed here. The actual
+# Node/npm versions are installed by setup-node.sh (run via postCreateCommand)
+# once the target project's package.json is mounted at /workspace, so the
+# devcontainer always matches that project's "engines" field rather than
+# whatever happened to be baked into a base image tag.
+ENV NVM_DIR=/usr/local/nvm
+RUN mkdir -p "$NVM_DIR" && \
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.8/install.sh | bash && \
+  chown -R node:node "$NVM_DIR"
+
+COPY setup-node.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/setup-node.sh
+
+# node user needs to symlink its nvm-installed node/npm into /usr/local/bin
+# (see setup-node.sh) so they're on PATH in every later shell, not just the
+# one nvm.sh was sourced in.
+RUN chown root:node /usr/local/bin && chmod 775 /usr/local/bin
 
 ARG USERNAME=node
 
@@ -64,10 +87,6 @@ RUN ARCH=$(dpkg --print-architecture) && \
 # Set up non-root user
 USER node
 
-# Install global packages
-ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
-ENV PATH=$PATH:/usr/local/share/npm-global/bin
-
 # Set the default shell to zsh rather than sh
 ENV SHELL=/bin/zsh
 
@@ -84,9 +103,6 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
   -a "source /usr/share/doc/fzf/examples/completion.zsh" \
   -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
   -x
-
-# Install Claude
-RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
 # Install rtk (Rust Token Killer) - CLI output compression for reduced token usage
 ENV PATH=$PATH:/home/node/.local/bin

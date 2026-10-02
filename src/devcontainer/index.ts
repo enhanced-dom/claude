@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url'
 
 const SOURCE_DIR = path.dirname(fileURLToPath(import.meta.url))
 const TARGET_DIR = path.join(process.cwd(), '.devcontainer')
-const EXECUTABLE = new Set(['init-firewall.sh', 'fix-host-docker-internal.sh', 'fix-node-modules-perms.sh'])
+const EXECUTABLE = new Set(['init-firewall.sh', 'fix-host-docker-internal.sh', 'fix-node-modules-perms.sh', 'setup-node.sh'])
 // listed explicitly (not readdirSync(SOURCE_DIR)) because the compiled
 // index.js/index.d.ts also live in this directory and must not be copied
 const TEMPLATE_FILES = ['devcontainer.json', 'Dockerfile', ...EXECUTABLE]
